@@ -123,7 +123,7 @@ export default function UsersPage() {
                 </div>
               </div>
               
-              <div className="p-4 border-t border-border/50 bg-background/50 backdrop-blur-sm flex-shrink-0">
+              <div className="p-4 border-t border-border/50 bg-background/50 backdrop-blur-sm flex-shrink-0 mb-20">
                 <Button 
                   disabled={!selected} 
                   onClick={async () => {
