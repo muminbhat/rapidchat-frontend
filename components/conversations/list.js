@@ -8,12 +8,12 @@ import { useChatStore } from "@/store/chat";
 import { useAuthStore } from "@/store/auth";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useSocket } from "@/app/providers";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search, MessageCircle, Users, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function useDebounced(value, delay) {
   const [v, setV] = useState(value);
@@ -81,62 +81,143 @@ export default function ConversationsList() {
   }
 
   return (
-    <div className={cn("h-full flex flex-col", activeWaId && "hidden lg:flex")}> {/* hide on mobile when a chat is active */}
-      <div className="p-3 border-b space-y-2">
-        <div className="flex items-center gap-2">
-          <Input placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} />
+    <div className={cn("h-full flex flex-col", activeWaId && "hidden lg:flex")}>
+      <div className="p-4 border-b border-border/50 space-y-3 bg-background/30 backdrop-blur-sm flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search conversations..." 
+              value={q} 
+              onChange={(e) => setQ(e.target.value)}
+              className="pl-10 modern-input"
+            />
+          </div>
+          {/* New Chat Button */}
+          <Button
+            onClick={() => router.push('/users')}
+            size="icon"
+            variant="outline"
+            className="flex-shrink-0 hover:bg-accent/50"
+            title="New Chat"
+          >
+            <Plus className="size-4" />
+          </Button>
         </div>
       </div>
+      
       {!token && (
-        <div className="p-3 border-b text-sm text-muted-foreground">Please login to start chatting</div>
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 text-center space-y-3 flex-shrink-0"
+        >
+          <MessageCircle className="size-12 text-muted-foreground mx-auto" />
+          <div className="text-sm text-muted-foreground">Please login to start chatting</div>
+        </motion.div>
       )}
-      <ScrollArea className="flex-1">
-        <div className="divide-y">
+      
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
+        <div className="divide-y divide-border/30">
           {isLoading && (
-            <div className="p-3 space-y-3">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          )}
-          {token && (!data || data.length === 0) && !isLoading && (
-            <div className="p-4 text-sm text-muted-foreground">No conversations</div>
-          )}
-          {token && dedupedConversations.map((c) => (
-            <button
-              key={`conv-${c.id}`}
-              onClick={() => openChat(c.id)}
-              className={cn(
-                "w-full text-left p-3 hover:bg-accent/50 transition-colors",
-                activeWaId === c.id && "bg-accent/40"
-              )}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-4 space-y-4"
             >
-              <div className="flex items-center gap-3">
-                <Avatar className="size-9">
-                  <AvatarImage src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(c.peerUsername || c.id)}`} />
-                  <AvatarFallback>{(c.peerUsername?.[0] || "U").toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="truncate font-medium">{c.peerUsername || "Conversation"}</div>
-                    {c.lastMessageAt && (
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(c.lastMessageAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                    )}
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="size-12 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
-                  <div className="text-xs text-muted-foreground truncate mt-0.5">&nbsp;</div>
                 </div>
-                {c.unreadCount > 0 && (
-                  <div className="ml-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] h-5 min-w-5 px-1">
-                    {c.unreadCount}
-                  </div>
+              ))}
+            </motion.div>
+          )}
+          
+          {token && (!data || data.length === 0) && !isLoading && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-8 text-center space-y-4"
+            >
+              <MessageCircle className="size-16 text-muted-foreground/50 mx-auto" />
+              <div className="text-sm text-muted-foreground">No conversations yet</div>
+              <div className="text-xs text-muted-foreground/70 mb-4">Start a new conversation to begin chatting</div>
+              <Button
+                onClick={() => router.push('/users')}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 mx-auto"
+              >
+                <Users className="size-4" />
+                <Plus className="size-4" />
+                Start New Chat
+              </Button>
+            </motion.div>
+          )}
+          
+          <AnimatePresence>
+            {token && dedupedConversations.map((c, index) => (
+              <motion.button
+                key={`conv-${c.id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
+                onClick={() => openChat(c.id)}
+                className={cn(
+                  "w-full text-left p-4 hover:bg-accent/30 transition-all duration-200 group",
+                  activeWaId === c.id && "bg-accent/40 border-l-4 border-l-primary"
                 )}
-              </div>
-            </button>
-          ))}
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center gap-4">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="relative"
+                  >
+                    <Avatar className="size-12 ring-2 ring-border/30 group-hover:ring-primary/30 transition-all duration-200">
+                      <AvatarImage src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(c.peerUsername || c.id)}`} />
+                      <AvatarFallback className="text-sm font-medium">
+                        {(c.peerUsername?.[0] || "U").toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {c.unreadCount > 0 && (
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium h-5 min-w-5 px-1.5"
+                      >
+                        {c.unreadCount}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="truncate font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {c.peerUsername || "Conversation"}
+                      </div>
+                      {c.lastMessageAt && (
+                        <div className="text-xs text-muted-foreground flex-shrink-0">
+                          {new Date(c.lastMessageAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground truncate">
+                      {c.lastMessage || "No messages yet"}
+                    </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </AnimatePresence>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

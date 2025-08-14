@@ -19,18 +19,18 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "RapidQuest Chat",
-  description: "WhatsApp-like chat UI",
+  description: "WhatsApp-like chat UI with modern design",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}>
         <ThemeProvider>
           <AppProviders>
-            <div className="min-h-dvh flex flex-col">
+            <div className="h-screen flex flex-col overflow-hidden">
               <AppHeader />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 overflow-hidden pt-0">{children}</main>
               <MobileTabs />
             </div>
           </AppProviders>

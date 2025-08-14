@@ -7,6 +7,8 @@ import { useAuthStore } from "@/store/auth";
 import { useChatStore } from "@/store/chat";
 import { useSocket } from "@/app/providers";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, User } from "lucide-react";
 
 function dedupByMessageId(items) {
   const seen = new Set();
@@ -148,14 +150,44 @@ export default function ConversationView() {
     return () => window.removeEventListener("focus", onFocus);
   }, [conversationId]);
 
-  if (!conversationId) return <div className="flex-1 p-4 text-sm text-muted-foreground">Select a conversation to start</div>;
+  if (!conversationId) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex-1 flex items-center justify-center p-8"
+      >
+        <div className="text-center space-y-4">
+          <div className="size-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+            <User className="size-8 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-semibold text-foreground">Select a conversation</h3>
+            <p className="text-sm text-muted-foreground">Choose a conversation from the list to start chatting</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (status === "loading") {
     return (
-      <div className="flex-1 p-4 space-y-2">
-        <Skeleton className="h-6 w-1/3" />
-        <Skeleton className="h-10 w-2/3" />
-        <Skeleton className="h-10 w-1/2 ml-auto" />
+      <div className="flex-1 p-4 space-y-4">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="size-10 rounded-full" />
+          <Skeleton className="h-5 w-32" />
+        </div>
+        <div className="space-y-4">
+          <div className="flex justify-start">
+            <Skeleton className="h-12 w-64 rounded-2xl" />
+          </div>
+          <div className="flex justify-end">
+            <Skeleton className="h-12 w-48 rounded-2xl" />
+          </div>
+          <div className="flex justify-start">
+            <Skeleton className="h-8 w-40 rounded-2xl" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -169,44 +201,108 @@ export default function ConversationView() {
     if (dayKey !== currentDay) {
       currentDay = dayKey;
       nodes.push(
-        <div key={`divider-${dayKey}`} className="text-center py-2 text-xs text-muted-foreground">
-          <span className="inline-block rounded-full bg-secondary px-2 py-1">{formatDateLabel(d)}</span>
-        </div>
+        <motion.div 
+          key={`divider-${dayKey}`} 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-4"
+        >
+          <span className="inline-block rounded-full bg-secondary/50 px-4 py-2 text-xs text-muted-foreground font-medium">
+            {formatDateLabel(d)}
+          </span>
+        </motion.div>
       );
     }
     const id = m.id || m.messageId;
     const isOutbound = me && m.senderId && String(m.senderId) === String(me.id);
     nodes.push(
-      <div key={id} className={isOutbound ? "text-right" : "text-left"}>
-        <div className={`inline-block rounded-lg px-3 py-2 ${isOutbound ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-          <div className="text-sm whitespace-pre-wrap break-words">{m.text || ""}</div>
-          <div className="mt-1 text-[10px] opacity-70 flex items-center gap-1 justify-end">
+      <motion.div 
+        key={id} 
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className={`flex ${isOutbound ? "justify-end" : "justify-start"} mb-3`}
+      >
+        <div className={`message-bubble ${isOutbound ? "message-bubble-outbound" : "message-bubble-inbound"}`}>
+          <div className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+            {m.text || ""}
+          </div>
+          <div className="mt-2 text-[10px] opacity-70 flex items-center gap-1 justify-end">
             {new Date(m.createdAt || m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="p-0">
+    <div className="h-full flex flex-col min-h-0">
       {convInfo?.peerUsername && (
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 py-2 flex items-center gap-3">
-          <button className="lg:hidden -ml-2 mr-2 rounded p-1 hover:bg-accent" onClick={() => window.history.back()} aria-label="Back">←</button>
-          <img src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(convInfo.peerUsername)}`} alt="avatar" className="w-8 h-8 rounded-full" />
-          <div className="font-medium text-sm truncate">{convInfo.peerUsername}</div>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky top-0 z-30 glass border-b border-border/50 px-4 py-3 flex items-center gap-3 flex-shrink-0"
+        >
+          <button 
+            className="lg:hidden -ml-2 mr-2 rounded-lg p-2 hover:bg-accent/50 transition-colors" 
+            onClick={() => window.history.back()} 
+            aria-label="Back"
+          >
+            <ArrowLeft className="size-5" />
+          </button>
+          <div className="size-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+            <img 
+              src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(convInfo.peerUsername)}`} 
+              alt="avatar" 
+              className="w-8 h-8 rounded-full" 
+            />
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-foreground">{convInfo.peerUsername}</div>
+            <div className="text-xs text-muted-foreground">Online</div>
+          </div>
+        </motion.div>
       )}
-      <div className="p-4 pt-2 space-y-2">
-        <div ref={topRef} />
-        {nodes}
-        {hasNextPage && (
-          <div className="text-center text-xs text-muted-foreground py-2">Loading more…</div>
-        )}
-        {isPeerTyping && (
-          <div className="text-left py-1 text-xs italic text-muted-foreground">typing…</div>
-        )}
-        <div ref={bottomRef} />
+      
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full overflow-y-auto p-4 space-y-2 hide-scrollbar">
+          <div ref={topRef} />
+          <AnimatePresence>
+            {nodes}
+          </AnimatePresence>
+          
+          {hasNextPage && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center text-xs text-muted-foreground py-4"
+            >
+              <div className="loading-shimmer rounded-full h-1 w-24 mx-auto mb-2"></div>
+              Loading more messages...
+            </motion.div>
+          )}
+          
+          {isPeerTyping && (
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex justify-start mb-3"
+            >
+              <div className="message-bubble message-bubble-inbound">
+                <div className="flex items-center gap-1">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          
+          <div ref={bottomRef} />
+        </div>
       </div>
     </div>
   );

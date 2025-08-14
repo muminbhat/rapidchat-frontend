@@ -18,7 +18,11 @@ export const useAuthStore = create((set, get) => ({
   },
   logout: () => {
     set({ token: null, user: null });
-    if (typeof window !== "undefined") localStorage.removeItem("rq-token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("rq-token");
+      // Redirect to home page after logout
+      window.location.href = "/";
+    }
   },
 }));
 
